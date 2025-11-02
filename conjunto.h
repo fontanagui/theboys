@@ -4,10 +4,11 @@
 // Este TAD implementa um conjunto de números inteiros com capacidade para
 // até CAP valores entre 0 e CAP-1, definida no momento de sua criação.
 //
-// Implementação com vetor de booleanos.
+// Implementação com vetor de booleanos.  
 
 #ifndef CONJUNTO
 #define CONJUNTO
+
 
 #include <stdbool.h>
 
