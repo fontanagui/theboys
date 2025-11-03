@@ -8,6 +8,7 @@
 #include "fprio.h"
 #include "conjunto.h"
 #include "mundo.h"
+#include "eventos.h"
 
 // seus #defines vão aqui
 #define T_INICIAL 0
@@ -39,9 +40,10 @@ int inicializa_mundo (mundo *m) {
         m->herois[i].paciencia = rand() % 101;  // exemplo de valor
         m->herois[i].velocidade = (rand() % (5000 - 50 + 1)) + 50;
         m->herois[i].experiencia = 0;
-        m->herois[i].base = NULL; // sem base inicial
+        m->herois[i].base = -1; // sem base inicial
         int tamanho = rand() % 4; // tamanho aleatório entre 0 e 3
         m->herois[i].habilidades = cjto_cria(tamanho);
+        m->herois[i].vivo = 1; // herói começa vivo
 
         while (cjto_cardinalidade(m->herois[i].habilidades) < tamanho) {
           int valor = rand() % N_HABILIDADES + 1; // número entre 1 e N_HABILIDADES
@@ -52,7 +54,7 @@ int inicializa_mundo (mundo *m) {
     for (int i = 0; i < N_BASES; i++) {
         m->bases[i].id = i;
         m->bases[i].lotacao = rand() % (10 - 3 + 1) + 3; //(entre 3 e 10)
-        m->bases[i].presentes = NULL;
+        m->bases[i].presentes = cjto_cria(0); // conjunto vazio inicialmente
         m->bases[i].espera = fila_cria();
         m->bases[i].local.x = rand() % TAM_MUNDO;
         m->bases[i].local.y = rand() % TAM_MUNDO;
@@ -70,7 +72,7 @@ int inicializa_mundo (mundo *m) {
 
         m->missao[i].local.x = rand() % TAM_MUNDO;
         m->missao[i].local.y = rand() % TAM_MUNDO;
-    
+        m->missao[i].status = 0; // missão não cumprida
     }
     return 0;
 }
@@ -79,17 +81,26 @@ int inicializa_mundo (mundo *m) {
 // programa principal
 int main ()
 {
-  struct  fprio_t *LEF= fprio_cria();
+  struct fprio_t *LEF;    // cria a LEF de fato
+  LEF = fprio_cria();
   mundo *m;
   m=cria_mundo();
   inicializa_mundo(m);
 
-  for (int i=0; i<m->Nherois; i++) {
-    int*b = &m->bases[rand() % m->Nbases];
-    int t= rand() % 4321;
-    void *funcao=chega(t, &m->herois[i], b);
-    fprio_insere(LEF,funcao,1, 1);
-  }
+ for (int i = 0; i < m->Nherois; i++) {
+    struct base *b = &m->bases[rand() % m->Nbases]; // ponteiro para base
+    int t = rand() % 4321;                          // tempo aleatório
+
+    // cria evento e preenche campos
+    evento *ev = malloc(sizeof(evento));
+    ev->tempo = t;
+    ev->h = &m->herois[i];
+    ev->b = b;
+    ev->funcao = chega; // ponteiro para a função, NÃO chama a função!
+
+    // insere na fila de prioridade
+    fprio_insere(LEF, ev, 1, ev->tempo); // prioridade = tempo
+}
 
 
 

@@ -28,6 +28,7 @@ struct heroi
     int experiencia;           // experiência do herói
     int base;                  // base do herói
     struct conjto_t *habilidades; // conjunto de habilidades do heroi
+    int vivo;                  // status de vida do herói (1 = vivo, 0 = morto)
 };
 
 struct base
@@ -43,7 +44,8 @@ struct missao
 {
     int id;                    // identificador da missão
     struct conjto_t *requisitos; // conjunto de habilidades necessárias
-    struct cordenada local;    // coordenadas da missão
+    struct cordenada local; 
+    int status; // coordenadas da missão
 };
 
 typedef struct
