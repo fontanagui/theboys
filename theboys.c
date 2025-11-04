@@ -86,6 +86,7 @@ int main ()
   mundo *m;
   m=cria_mundo();
   inicializa_mundo(m);
+  int relogio= m->relogio;
 
  for (int i = 0; i < m->Nherois; i++) {
     struct base *b = &m->bases[rand() % m->Nbases]; // ponteiro para base
@@ -96,22 +97,51 @@ int main ()
     ev->tempo = t;
     ev->h = &m->herois[i];
     ev->b = b;
-    ev->funcao = chega; // ponteiro para a função, NÃO chama a função!
+    ev->tipo = 1;  // CHEGA
+    ev->mi = NULL;
 
     // insere na fila de prioridade
-    fprio_insere(LEF, ev, 1, ev->tempo); // prioridade = tempo
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo); // prioridade = tempo
 }
 
+int type;
+  while (relogio <= T_FINAL) {
 
-
-
-  // iniciar o mundo
-
-
-  // executar o laço de simulação
-
-  // destruir o mundo
-
-  return (0) ;
+    evento *ev = fprio_retira(LEF,&type,&relogio);
+    if (!ev) break;
+    switch (type)
+    {
+    case 1  :
+      chega(ev->tempo, ev->h, ev->b);
+      break;
+    case 2  :
+      espera(ev->tempo, ev->h, ev->b);
+      break;
+    case 3  :
+      desiste(ev->tempo, ev->h, ev->b);
+      break;
+    case 4  :
+      avisa(ev->tempo, ev->b);
+      break;
+    case 5  :
+      entra(ev->tempo, ev->h, ev->b);
+      break;
+    case 6  :
+      sai(ev->tempo, ev->h, ev->b);
+      break;
+    case 7  : 
+      viaja(ev->tempo, ev->h, ev->b);
+      break;
+    case 8  :
+      morre(ev->tempo, ev->h, ev->b);
+      break;
+    case 9  :
+      missao(ev->tempo, ev->mi);
+      break;
+    case 10 :
+      fim(ev->tempo);
+      break;
+  }
+  }
+  return 0;
 }
-

@@ -45,12 +45,13 @@ void adia_missao(int t, struct missao *mi) {
     ev->h = NULL;
     ev->b = NULL;
     ev->mi = mi;
-    ev->funcao = missao;
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    ev->tipo= 9; // MISSÃO
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
     printf("%d: MISSÃO %d ADIADA\n", t, mi->id);
 }
 
 void chega(int t, struct heroi *h, struct base *b) {
+    if (!h || !b || (h->vivo==0)) return;
     h->base = b->id;
     printf("%d: CHEGA HEROI %d BASE %d.\n", t, h->id, b->id);
 
@@ -62,13 +63,14 @@ void chega(int t, struct heroi *h, struct base *b) {
     ev->tempo = t;
     ev->h = h;
     ev->b = b;
-    ev->funcao = espera_evento ? espera : desiste;
+    ev->tipo = espera_evento ? 2 : 3;
     ev->mi = NULL;
 
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
 void espera(int t, struct heroi *h, struct base *b) {
+    if (!h || !b || (h->vivo==0)) return;
     fila_insere(b->espera, h);
     printf("%d: HEROI %d ENTRA NA FILA DE ESPERA DA BASE %d.\n", t, h->id, b->id);
 
@@ -77,15 +79,16 @@ void espera(int t, struct heroi *h, struct base *b) {
     ev->tempo = t;
     ev->h = NULL;
     ev->b = b;
-    ev->funcao = avisa;
+    ev->tipo = 4;  // AVISA
     ev->mi = NULL;
 
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
 
 
 void desiste(int t, struct heroi *h, struct base *b) {
+    if (!h || !b || (h->vivo==0)) return;
     int indice_b = b->id;
     int indice_destino;
 
@@ -108,18 +111,19 @@ void desiste(int t, struct heroi *h, struct base *b) {
     ev->tempo = t;
     ev->h = h;
     ev->b = D;           // destino da viagem
-    ev->funcao = viaja;  // função que executa a viagem
+    ev->tipo= 7;  // VIAJA
     ev->mi = NULL;
 
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
 void avisa(int t, struct base *b) {
     struct heroi *h;
 
     // Enquanto houver vagas e heróis na fila
-    while (cjto_card(b->presentes) < b->lotacao && !fila_vazia(b->espera)) {
+    while (cjto_card(b->presentes) < b->lotacao && !fila_vazia(b->espera) ) {
         h = fila_retira(b->espera);       // retira primeiro herói da fila
+        if (!h || (h->vivo==0)) continue;
         cjto_insere(b->presentes, h->id); // adiciona ao conjunto de presentes
 
         printf("%d: HEROI %d ENTRA NA BASE %d.\n", t, h->id, b->id);
@@ -131,15 +135,16 @@ void avisa(int t, struct base *b) {
         ev->tempo = t;
         ev->h = h;
         ev->b = b;
-        ev->funcao = entra;
+        ev->tipo = 5;  // ENTRA
         ev->mi = NULL;
 
-        fprio_insere(LEF, ev, 1, ev->tempo);
+        fprio_insere(LEF, ev, ev->tipo, ev->tempo);
     }
 }
 
 
 void entra(int t, struct heroi *h, struct base *b) {
+    if (!h || !b || (h->vivo==0)) return;
     // Calcula tempo de permanência na base
     int aleatorio = rand() % 20 + 1;  // número aleatório entre 1 e 20
     int TPB = 15 + h->paciencia * aleatorio;
@@ -153,13 +158,14 @@ void entra(int t, struct heroi *h, struct base *b) {
     ev->tempo = t + TPB; // momento em que o herói sai
     ev->h = h;
     ev->b = b;
-    ev->funcao = sai;
+    ev->tipo = 6;  // SAI
     ev->mi = NULL;
 
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
 void sai(int t, struct heroi *h, struct base *b) {
+    if (!h || !b || (h->vivo==0)) return;
     // Remove o herói do conjunto de presentes da base
     cjto_remove(b->presentes, h->id);
 
@@ -175,9 +181,9 @@ void sai(int t, struct heroi *h, struct base *b) {
         ev_viaja->tempo = t;
         ev_viaja->h = h;
         ev_viaja->b = D;
-        ev_viaja->funcao = viaja;
+        ev_viaja->tipo = 7;  // VIAJA
         ev_viaja->mi = NULL;
-        fprio_insere(LEF, ev_viaja, 1, ev_viaja->tempo);
+        fprio_insere(LEF, ev_viaja, ev_viaja->tipo, ev_viaja->tempo);
 
     }
 
@@ -187,15 +193,16 @@ void sai(int t, struct heroi *h, struct base *b) {
         ev_avisa->tempo = t;
         ev_avisa->h = NULL;
         ev_avisa->b = b;
-        ev_avisa->funcao = avisa;
+        ev_avisa->tipo= 4;  // AVISA    
         ev_avisa->mi = NULL;
-        fprio_insere(LEF, ev_avisa, 1, ev_avisa->tempo);
+        fprio_insere(LEF, ev_avisa, ev_avisa->tipo, ev_avisa->tempo);
     }
 }
 
 
 
 void viaja(int t, struct heroi *h, struct base *d) {
+    if (!h || !d || (h->vivo==0)) return;
     struct base *B_atual = NULL;
 
     // Se o herói tem uma base atual válida, pega a base
@@ -219,17 +226,20 @@ void viaja(int t, struct heroi *h, struct base *d) {
            t, h->id, B_atual->id, d->id, duracao);
 
     // Cria evento CHEGA
-    evento *ev = malloc(sizeof(evento));
-    if (!ev) return;
 
-    ev->tempo = t + duracao;
-    ev->h = h;
-    ev->b = d;
-    ev->funcao = chega;
-    ev->mi = NULL;
-
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    evento *ev_chega = malloc(sizeof(evento));
+    if (ev_chega) {
+        ev_chega->tempo = t + duracao;
+        ev_chega->h = h;
+        ev_chega->b = d;
+        ev_chega->tipo= 1;  // AVISA    
+        ev_chega->mi = NULL;
+        fprio_insere(LEF, ev_chega, ev_chega->tipo, ev_chega->tempo);
+    }
 }
+
+
+  
 
 
 void morre(int t, struct heroi *h, struct base *b) {
@@ -250,14 +260,14 @@ void morre(int t, struct heroi *h, struct base *b) {
     ev->tempo = t;
     ev->h = NULL;  // não há herói associado
     ev->b = b;
-    ev->funcao = avisa;
+    ev->tipo = 4;  // AVISA
     ev->mi = NULL;
 
-    fprio_insere(LEF, ev, 1, ev->tempo);
+    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
 
-void missao(int t, struct missao *mi) {
+void missao(int t,  struct missao *mi) {
     if (!mi) return;
 
     // 1. Encontrar a base mais próxima com pelo menos 1 herói vivo
@@ -324,8 +334,8 @@ void missao(int t, struct missao *mi) {
             ev->h = h;
             ev->b = b;
             ev->mi = NULL;
-            ev->funcao = morre;
-            fprio_insere(LEF, ev, 1, ev->tempo);
+            ev->tipo = 8; //morre
+            fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 
             for (int hid = 0; hid < MAXH; hid++) {
                 if (cjto_pertence(b->presentes, hid) && hid != h_max) {

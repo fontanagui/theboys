@@ -9,7 +9,7 @@ typedef struct evento {
     int tempo;                                  // tempo do evento
     struct heroi *h;                            // herói envolvido
     struct base *b;                             // base envolvida
-    void (*funcao)(int, struct heroi*, struct base*);
+    int tipo;                                     // tipo do evento
     struct missao *mi // ponteiro para função
 } evento;
 
@@ -32,7 +32,7 @@ void viaja(int t, struct heroi *h, struct base *d);
 void morre(int t, struct heroi *h, struct base *b);
 
 
-void missao(int t, struct heroi *h, struct missao *mi);
+void missao(int t,  struct missao *mi);
  
 
 void fim (int t);
