@@ -8,6 +8,7 @@
 #define N_HABILIDADES 10
 #define N_PRESENTES 10
 #define MUNDO_TAM 100
+#define TMP_MAX 100000
 
 struct heroi *cria_heroi(int id) {
     struct heroi *h = (struct heroi *)malloc(sizeof(struct heroi));
@@ -46,5 +47,6 @@ struct missao *cria_missao(int id) {
     missao->local.x= rand()% MUNDO_TAM;
     missao->local.y=rand()% MUNDO_TAM;
     missao->status=0;
+    missao->tempo= rand()% TMP_MAX +3420;
     return missao;
 }

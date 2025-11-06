@@ -10,9 +10,6 @@
 #ifndef ENTIDADES
 #define ENTIDADES
 
-#define MAXH 10
-#define MAXB 4
-#define MAXM 10
 
 struct cordenada
 {
@@ -48,7 +45,8 @@ struct missao
     int id;                    // identificador da missão
     struct conjto_t *requisitos; // conjunto de habilidades necessárias
     struct cordenada local; // coordenadas da missão
-    int status; 
+    int status;
+    int tempo;
 };
 
 typedef struct
