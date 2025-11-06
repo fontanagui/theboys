@@ -38,14 +38,17 @@ struct base
     struct conjto_t *presentes;  // conjunto de ids dos herois na base
     struct fila_t *espera ;     // fila de espera na base
     struct cordenada local;    // coordenadas da base
+    int missoes ;              // número de missões completadas pela base
+
+
 };
 
 struct missao
 {
     int id;                    // identificador da missão
     struct conjto_t *requisitos; // conjunto de habilidades necessárias
-    struct cordenada local; 
-    int status; // coordenadas da missão
+    struct cordenada local; // coordenadas da missão
+    int status; 
 };
 
 typedef struct
@@ -57,9 +60,12 @@ typedef struct
     int Nmissoes;              // número de missões no mundo
     int Nhabilidades;          // número de habilidades no mundo
     int NCompostosV;           // número de compostos v no mundo
-    struct heroi herois[MAXH]; // vetor de heróis no mundo
-    struct base bases[MAXB];   // vetor de bases no mundo
-    struct missao missao[MAXM]; // vetor de missões no mundo
+    struct heroi **herois[MAXH]; // vetor de heróis no mundo
+    struct base **bases[MAXB];   // vetor de bases no mundo
+    struct missao **missao[MAXM]; // vetor de missões no mundo
+    int vivos;                   // número de heróis vivos no mundo
+    int eventos ;                 // número de eventos processados no mundo 
+    int missoes_completas;        // número de missões completadas no mundo
 } mundo;
 
 

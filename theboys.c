@@ -23,7 +23,7 @@
 // minimize o uso de variáveis globais
 
 int inicializa_mundo (mundo *m) {
-    // inicialize os atributos do mundo aqui
+    // inicializa os atributos do mundo aqui
     if (!m) return -1;
     m->dimensao.x = TAM_MUNDO;
     m->dimensao.y = TAM_MUNDO;
@@ -33,6 +33,8 @@ int inicializa_mundo (mundo *m) {
     m->Nmissoes = N_MISSOES;
     m->Nhabilidades = N_HABILIDADES;
     m->NCompostosV = COMPOSTO_V;
+    
+    
 
     // inicialize heróis, bases e missões conforme necessário
     for (int i = 0; i < N_HEROIS; i++) {
@@ -41,42 +43,9 @@ int inicializa_mundo (mundo *m) {
         m->herois[i].velocidade = (rand() % (5000 - 50 + 1)) + 50;
         m->herois[i].experiencia = 0;
         m->herois[i].base = -1; // sem base inicial
-        int tamanho = rand() % 4; // tamanho aleatório entre 0 e 3
-        m->herois[i].habilidades = cjto_cria(tamanho);
-        m->herois[i].vivo = 1; // herói começa vivo
 
-        while (cjto_cardinalidade(m->herois[i].habilidades) < tamanho) {
-          int valor = rand() % N_HABILIDADES + 1; // número entre 1 e N_HABILIDADES
-          cjto_insere(m->herois[i].habilidades, valor);
 }
-
-    }
-    for (int i = 0; i < N_BASES; i++) {
-        m->bases[i].id = i;
-        m->bases[i].lotacao = rand() % (10 - 3 + 1) + 3; //(entre 3 e 10)
-        m->bases[i].presentes = cjto_cria(0); // conjunto vazio inicialmente
-        m->bases[i].espera = fila_cria();
-        m->bases[i].local.x = rand() % TAM_MUNDO;
-        m->bases[i].local.y = rand() % TAM_MUNDO;
-    }
-
-    for (int i = 0; i < N_MISSOES; i++) {
-        m->missao[i].id = i;
-        int tamanho = rand() % 3 + 2; // Gera 2, 3 ou 4
-        m->missao[i].requisitos = cjto_cria(tamanho);
-
-        while (cjto_card(m->missao[i].requisitos) < tamanho) {
-          int valor = rand() % 4 + 1; // Gera número de 1 a 4
-          cjto_insere(m->missao[i].requisitos, valor);
-      }
-
-        m->missao[i].local.x = rand() % TAM_MUNDO;
-        m->missao[i].local.y = rand() % TAM_MUNDO;
-        m->missao[i].status = 0; // missão não cumprida
-    }
-    return 0;
 }
-
 
 // programa principal
 int main ()
