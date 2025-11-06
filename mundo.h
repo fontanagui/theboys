@@ -60,9 +60,9 @@ typedef struct
     int Nmissoes;              // número de missões no mundo
     int Nhabilidades;          // número de habilidades no mundo
     int NCompostosV;           // número de compostos v no mundo
-    struct heroi **herois[MAXH]; // vetor de heróis no mundo
-    struct base **bases[MAXB];   // vetor de bases no mundo
-    struct missao **missao[MAXM]; // vetor de missões no mundo
+    struct heroi **herois; // vetor de heróis no mundo
+    struct base **bases;   // vetor de bases no mundo
+    struct missao **missao; // vetor de missões no mundo
     int vivos;                   // número de heróis vivos no mundo
     int eventos ;                 // número de eventos processados no mundo 
     int missoes_completas;        // número de missões completadas no mundo

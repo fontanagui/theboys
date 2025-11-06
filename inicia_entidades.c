@@ -20,7 +20,7 @@ struct heroi *cria_heroi(int id) {
     int tamanho = rand() % 4; // tamanho aleatório entre 0 e 3
     h->habilidades = cjto_aleat(tamanho, N_HABILIDADES );
     h->vivo = 1; // herói começa vivo
-    return h;
+    return  h;
 }
 
 
@@ -39,10 +39,12 @@ struct base *cria_base(int id) {
 
 
 struct missao *cria_missao(int id) {
-    struct missao *mi= (struct missao *)malloc(sizeof(struct missao));
-    mi->id=id;
+    struct missao *missao= (struct missao *)malloc(sizeof(struct missao));
+    missao->id=id;
     int habilidades=rand()%(10-6+1)+6;
-    mi->requisitos=cjto_aleat(habilidades,N_HABILIDADES);
-    mi->local.x= rand()% MUNDO_TAM;
-    mi->local.y=rand()% MUNDO_TAM;
+    missao->requisitos=cjto_aleat(habilidades,N_HABILIDADES);
+    missao->local.x= rand()% MUNDO_TAM;
+    missao->local.y=rand()% MUNDO_TAM;
+    missao->status=0;
+    return missao;
 }

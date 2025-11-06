@@ -13,20 +13,20 @@ extern mundo *m;        // mundo global
 
 
 // Verifica se a base tem pelo menos um herói vivo
-int base_tem_heroi_vivo(struct base *b, mundo *mundo_global) {
+int base_tem_heroi_vivo(struct base *b,  ) {
     for (int hid = 0; hid < MAXH; hid++) {
         if (cjto_pertence(b->presentes, hid)) {
-            if (mundo_global->herois[hid].vivo) return 1;
+            if (herois[hid].vivo) return 1;
         }
     }
     return 0;
 }
 // Cria a união das habilidades de todos os heróis vivos da base
-struct cjto_t *habilidades_base(struct base *b, mundo *mundo_global) {
-    struct cjto_t *habilidades = cjto_cria(mundo_global->Nhabilidades);
+struct cjto_t *habilidades_base(struct base *b, mundo *m) {
+    struct cjto_t *habilidades = cjto_cria(m->Nhabilidades);
     for (int hid = 0; hid < MAXH; hid++) {
         if (cjto_pertence(b->presentes, hid)) {
-            struct heroi *h = &mundo_global->herois[hid];
+            struct heroi *h = &m->herois[hid];
             if (h->vivo) {
                 struct cjto_t *temp = cjto_uniao(habilidades, h->habilidades);
                 cjto_destroi(habilidades);

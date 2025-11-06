@@ -9,6 +9,7 @@
 #include "conjunto.h"
 #include "mundo.h"
 #include "eventos.h"
+#include "inicia_entidades.h"
 
 // seus #defines vão aqui
 #define T_INICIAL 0
@@ -33,18 +34,20 @@ int inicializa_mundo (mundo *m) {
     m->Nmissoes = N_MISSOES;
     m->Nhabilidades = N_HABILIDADES;
     m->NCompostosV = COMPOSTO_V;
-    
-    
+    m->herois= malloc(N_HEROIS* sizeof(struct heroi *));
+    m->bases =malloc (N_BASES * sizeof(struct base *));
+    m->missao=malloc(N_MISSOES* sizeof(struct missao *));
 
     // inicialize heróis, bases e missões conforme necessário
     for (int i = 0; i < N_HEROIS; i++) {
-        m->herois[i].id = i;
-        m->herois[i].paciencia = rand() % 101;  // exemplo de valor
-        m->herois[i].velocidade = (rand() % (5000 - 50 + 1)) + 50;
-        m->herois[i].experiencia = 0;
-        m->herois[i].base = -1; // sem base inicial
-
-}
+       m->herois[i] =cria_heroi(i);
+    }
+    for (int i=0;i<  N_BASES; i++) {
+      m->bases[i]= cria_base(i);
+    }
+    for (int i =0;i<  N_MISSOES;i++){
+      m->missao= cria_missao(i);
+    }
 }
 
 // programa principal
