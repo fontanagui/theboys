@@ -38,47 +38,37 @@ struct cjto_t *habilidades_base(struct base *b, mundo *m) {
 }
 
 
-// Agenda a missão para 24h depois
-void adia_missao(int t, struct missao *mi) {
-    evento *ev = malloc(sizeof(evento));
-    ev->tempo = t + 24*60;
-    ev->h = NULL;
-    ev->b = NULL;
-    ev->mi = mi;
-    ev->tipo= 9; // MISSÃO
-    fprio_insere(LEF, ev, ev->tipo, ev->tempo);
-    printf("%d: MISSÃO %d ADIADA\n", t, mi->id);
-}
 
-void chega(int t, struct heroi *h, struct base *b) {
-    if (!h || !b || (h->vivo==0)) return;
-    h->base = b->id;
-    printf("%d: CHEGA HEROI %d BASE %d.\n", t, h->id, b->id);
 
-    int espera_evento = ((cjt_card(b->presentes) < b->lotacao) && fila_vazia(b->espera)) ||
-                        (h->paciencia > 10 * b->espera->num);
+void chega( struct evento *chega) {
+    if (!chega  || !chega->h->vivo) return;
+    chega->h->base = chega->b->id;
+    printf("%d: CHEGA HEROI %d BASE %d.\n", chega->tempo, chega->h->id, chega->b->id);
+
+    int espera_evento = ((cjt_card(chega->b->presentes) < chega-> b->lotacao) && fila_vazia(chega->b->espera)) ||
+                        (chega->h->paciencia > 10 * chega->b->espera->num);
 
     evento *ev = malloc(sizeof(evento));
     if (!ev) return;
-    ev->tempo = t;
-    ev->h = h;
-    ev->b = b;
+    ev->tempo = chega->tempo;
+    ev->h = chega->h;
+    ev->b = chega->b;
     ev->tipo = espera_evento ? 2 : 3;
     ev->mi = NULL;
 
     fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
-void espera(int t, struct heroi *h, struct base *b) {
-    if (!h || !b || (h->vivo==0)) return;
-    fila_insere(b->espera, h);
-    printf("%d: HEROI %d ENTRA NA FILA DE ESPERA DA BASE %d.\n", t, h->id, b->id);
+void espera(struct evento *espera) {
+    if (!espera || (!espera->h->vivo)) return;
+    fila_insere(espera->b->espera, espera->h);
+    printf("%d: HEROI %d ENTRA NA FILA DE ESPERA DA BASE %d.\n", espera->tempo, espera->h->id, espera->b->id);
 
     evento *ev = malloc(sizeof(evento));
     if (!ev) return;
-    ev->tempo = t;
+    ev->tempo = espera->tempo;
     ev->h = NULL;
-    ev->b = b;
+    ev->b = espera->b;
     ev->tipo = 4;  // AVISA
     ev->mi = NULL;
 
@@ -87,9 +77,9 @@ void espera(int t, struct heroi *h, struct base *b) {
 
 
 
-void desiste(int t, struct heroi *h, struct base *b) {
-    if (!h || !b || (h->vivo==0)) return;
-    int indice_b = b->id;
+void desiste(mundo *m, struct evento *desiste) {
+    if (!desiste ||(desiste->h->vivo==0)) return;
+    int indice_b = desiste-> b->id;
     int indice_destino;
 
     // gera índice aleatório diferente do índice atual
@@ -102,14 +92,14 @@ void desiste(int t, struct heroi *h, struct base *b) {
 
     struct base *D = &m->bases[indice_destino];
 
-    printf("%d: HEROI %d DESISTE DA BASE %d E VAI PARA BASE %d.\n", t, h->id, b->id, D->id);
+    printf("%d: HEROI %d DESISTE DA BASE %d E VAI PARA BASE %d.\n", desiste->tempo,desiste-> h->id, desiste-> b->id, D->id);
 
     // Cria evento VIAJA
     evento *ev = malloc(sizeof(evento));
     if (!ev) return;
 
-    ev->tempo = t;
-    ev->h = h;
+    ev->tempo = desiste->tempo;
+    ev->h = desiste->h;
     ev->b = D;           // destino da viagem
     ev->tipo= 7;  // VIAJA
     ev->mi = NULL;
@@ -117,24 +107,24 @@ void desiste(int t, struct heroi *h, struct base *b) {
     fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
-void avisa(int t, struct base *b) {
+void avisa(struct evento *avisa) {
     struct heroi *h;
 
     // Enquanto houver vagas e heróis na fila
-    while (cjto_card(b->presentes) < b->lotacao && !fila_vazia(b->espera) ) {
-        h = fila_retira(b->espera);       // retira primeiro herói da fila
+    while (cjto_card(avisa->b->presentes) < avisa->b->lotacao && !fila_vazia(avisa->b->espera) ) {
+        h = fila_retira(avisa->b->espera);       // retira primeiro herói da fila
         if (!h || (h->vivo==0)) continue;
-        cjto_insere(b->presentes, h->id); // adiciona ao conjunto de presentes
+        cjto_insere(avisa->b->presentes, h->id); // adiciona ao conjunto de presentes
 
-        printf("%d: HEROI %d ENTRA NA BASE %d.\n", t, h->id, b->id);
+        printf("%d: HEROI %d ENTRA NA BASE %d.\n", avisa->tempo, h->id, avisa->b->id);
 
         // Cria evento ENTRA
         evento *ev = malloc(sizeof(evento));
-        if (!ev) continue;
+        if (!ev) return -1;
 
-        ev->tempo = t;
+        ev->tempo = avisa->tempo;
         ev->h = h;
-        ev->b = b;
+        ev->b = avisa ->b;
         ev->tipo = 5;  // ENTRA
         ev->mi = NULL;
 
@@ -143,21 +133,21 @@ void avisa(int t, struct base *b) {
 }
 
 
-void entra(int t, struct heroi *h, struct base *b) {
-    if (!h || !b || (h->vivo==0)) return;
+void entra(struct evento *entra) {
+    if (!entra ||(!entra->h->vivo)) return;
     // Calcula tempo de permanência na base
     int aleatorio = rand() % 20 + 1;  // número aleatório entre 1 e 20
-    int TPB = 15 + h->paciencia * aleatorio;
+    int TPB = 15 + entra->h->paciencia * aleatorio;
 
-    printf("%d: HEROI %d ENTRA NA BASE %d POR %d UNIDADES DE TEMPO.\n", t, h->id, b->id, TPB);
+    printf("%d: HEROI %d ENTRA NA BASE %d POR %d UNIDADES DE TEMPO.\n", entra->tempo, entra->h->id, entra->b->id, TPB);
 
     // Cria evento SAI
     evento *ev = malloc(sizeof(evento));
     if (!ev) return;
 
-    ev->tempo = t + TPB; // momento em que o herói sai
-    ev->h = h;
-    ev->b = b;
+    ev->tempo = entra->tempo + TPB; // momento em que o herói sai
+    ev->h =entra->h;
+    ev->b = entra->b;
     ev->tipo = 6;  // SAI
     ev->mi = NULL;
 

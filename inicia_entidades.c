@@ -48,5 +48,6 @@ struct missao *cria_missao(int id) {
     missao->local.y=rand()% MUNDO_TAM;
     missao->status=0;
     missao->tempo= rand()% TMP_MAX +3420;
+    missao->tentativa=0;
     return missao;
 }
