@@ -14,27 +14,26 @@ typedef struct evento {
 } evento;
 
 
-void chega(int t, struct heroi *h, struct base *b);
+void chega(struct evento *ev );
+
+void espera(struct evento *ev );
+
+void desiste(mundo *m, struct evento *ev );
+
+void avisa(struct evento *ev );
+
+void entra (struct evento *ev );
+
+void sai(struct evento *ev, mundo *m);
+
+void viaja(struct evento *ev,mundo *m );
+
+void morre (struct evento *ev,mundo *m);
 
 
-void espera(int t, struct heroi *h, struct base *b);
-
-void desiste(int t, struct heroi *h , struct base *b);
-
-void avisa(int t, struct base *b);
-
-void entra (int t, struct heroi *h, struct base *b);
-
-void sai(int t, struct heroi *h, struct base *b);
-
-void viaja(int t, struct heroi *h, struct base *d);     
-
-void morre(int t, struct heroi *h, struct base *b);
-
-
-void missao(int t,  struct missao *mi);
+void missao(struct evento *ev, mundo *m );
  
 
-void fim (int t);
+void fim (struct evento *ev );
 
 #endif

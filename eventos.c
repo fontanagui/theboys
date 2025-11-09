@@ -1,43 +1,81 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include "fila.h"
-#include "fprio.h"
+#include <stdlib.h>
+#include <math.h>
 #include "mundo.h"
+#include "conjunto.h"
+#include "fprio.h"
+#include "fila.h"
 #include "eventos.h"
 
-
-extern struct fprio_t *LEF;  // LEF global
-extern mundo *m;        // mundo global
-
+#define N_HABILIDADES 10
+#define INT_MAX 100000
 
 
-// Verifica se a base tem pelo menos um herói vivo
-int base_tem_heroi_vivo(struct base *b,  ) {
-    for (int hid = 0; hid < MAXH; hid++) {
-        if (cjto_pertence(b->presentes, hid)) {
-            if (herois[hid].vivo) return 1;
-        }
-    }
-    return 0;
+extern struct fprio_t *LEF;
+// Função auxiliar para calcular distância entre dois pontos
+int calcula_distancia(struct cordenada p1, struct cordenada p2) {
+    int dx = p1.x - p2.x;
+    int dy = p1.y - p2.y;
+    return (int)sqrt(dx * dx + dy * dy);
 }
-// Cria a união das habilidades de todos os heróis vivos da base
-struct cjto_t *habilidades_base(struct base *b, mundo *m) {
-    struct cjto_t *habilidades = cjto_cria(m->Nhabilidades);
-    for (int hid = 0; hid < MAXH; hid++) {
-        if (cjto_pertence(b->presentes, hid)) {
-            struct heroi *h = &m->herois[hid];
-            if (h->vivo) {
-                struct cjto_t *temp = cjto_uniao(habilidades, h->habilidades);
-                cjto_destroi(habilidades);
-                habilidades = temp;
+
+// Retorna 1 se a equipe da base tem todas as habilidades requeridas para a missão
+int equipe_apta(struct base *base, struct missao *missao,  mundo *m) {
+    if (!base || !missao || !m) return 0;
+    if (cjto_card(base->presentes) == 0) return 0;
+
+    struct cjto_t *habilidades_equipe = cjto_cria(N_HABILIDADES);
+    if (!habilidades_equipe) return 0;
+
+    for (int id = 0; id < base->presentes->cap; id++) {
+        if (base->presentes->flag[id]) {
+            struct heroi *h = m->herois[id];
+            if (h && h->vivo) {
+                struct cjto_t *temp = cjto_uniao(habilidades_equipe, h->habilidades);
+                cjto_destroi(habilidades_equipe);
+                habilidades_equipe = temp;
             }
         }
     }
-    return habilidades;
+
+    int apta = cjto_contem(habilidades_equipe, missao->requisitos);
+    cjto_destroi(habilidades_equipe);
+    return apta;
 }
 
+// Retorna o herói mais experiente presente na base
+struct heroi *heroi_mais_experiente(struct base *base,  mundo *m) {
+    if (!base || !base->presentes || !m) return NULL;
 
+    struct heroi *mais_exp = NULL;
+    int max_exp = -1;
+
+    for (int i = 0; i < base->presentes->cap; i++) {
+        if (base->presentes->flag[i]) {
+            struct heroi *h = m->herois[i];
+            if (h && h->vivo && h->experiencia > max_exp) {
+                max_exp = h->experiencia;
+                mais_exp = h;
+            }
+        }
+    }
+
+    return mais_exp;
+}
+
+// Incrementa a experiência de todos os heróis presentes na base, exceto 'exceto'
+void incrementa_experiencia_equipe(struct base *base, struct heroi *exceto,  mundo *m) {
+    if (!base || !base->presentes || !m) return;
+
+    for (int i = 0; i < base->presentes->cap; i++) {
+        if (base->presentes->flag[i]) {
+            struct heroi *h = m->herois[i];
+            if (h && h->vivo && (exceto == NULL || h->id != exceto->id)) {
+                h->experiencia++;
+            }
+        }
+    }
+}
 
 
 void chega( struct evento *chega) {
@@ -154,22 +192,22 @@ void entra(struct evento *entra) {
     fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
-void sai(int t, struct heroi *h, struct base *b) {
-    if (!h || !b || (h->vivo==0)) return;
+void sai(struct evento *sai, mundo *m) {
+    if (!sai || sai->h->vivo==0) return;
     // Remove o herói do conjunto de presentes da base
-    cjto_remove(b->presentes, h->id);
+    cjto_retira(sai->b->presentes, sai-> h->id);
 
     // Escolhe uma base destino aleatória (pode ser a mesma)
     int indice_destino = rand() % m->Nbases;
     struct base *D = &m->bases[indice_destino];
 
-    printf("%d: HEROI %d SAI DA BASE %d E VIAJA PARA BASE %d.\n", t, h->id, b->id, D->id);
+    printf("%d: HEROI %d SAI DA BASE %d E VIAJA PARA BASE %d.\n", sai->tempo, sai->h->id, sai->b->id, D);
 
     // Cria evento VIAJA
     evento *ev_viaja = malloc(sizeof(evento));
     if (ev_viaja) {
-        ev_viaja->tempo = t;
-        ev_viaja->h = h;
+        ev_viaja->tempo = sai->tempo;
+        ev_viaja->h = sai->h;
         ev_viaja->b = D;
         ev_viaja->tipo = 7;  // VIAJA
         ev_viaja->mi = NULL;
@@ -180,9 +218,9 @@ void sai(int t, struct heroi *h, struct base *b) {
     // Cria evento AVISA para a base original
     evento *ev_avisa = malloc(sizeof(evento));
     if (ev_avisa) {
-        ev_avisa->tempo = t;
+        ev_avisa->tempo = sai->tempo;
         ev_avisa->h = NULL;
-        ev_avisa->b = b;
+        ev_avisa->b = sai->b;
         ev_avisa->tipo= 4;  // AVISA    
         ev_avisa->mi = NULL;
         fprio_insere(LEF, ev_avisa, ev_avisa->tipo, ev_avisa->tempo);
@@ -191,13 +229,13 @@ void sai(int t, struct heroi *h, struct base *b) {
 
 
 
-void viaja(int t, struct heroi *h, struct base *d) {
-    if (!h || !d || (h->vivo==0)) return;
+void viaja(struct evento *viaja,mundo*m) {
+    if (!viaja|| (viaja->h->vivo==0)) return;
     struct base *B_atual = NULL;
 
     // Se o herói tem uma base atual válida, pega a base
-    if (h->base >= 0 && h->base < m->Nbases) {
-        B_atual = &m->bases[h->base];
+    if (viaja->h->base >= 0 && viaja->h->base < m->Nbases) {
+        B_atual = &m->bases[viaja->h->base];
     } else {
         // Caso não tenha base, assume origem (0,0)
         static struct base origem = { .local = {0,0} };
@@ -205,23 +243,23 @@ void viaja(int t, struct heroi *h, struct base *d) {
     }
 
     // Calcula distância cartesiana
-    int dx = d->local.x - B_atual->local.x;
-    int dy =d->local.y - B_atual->local.y;
+    int dx = viaja->b->local.x - B_atual->local.x;
+    int dy =viaja->b->local.y - B_atual->local.y;
     double distancia = sqrt(dx*dx + dy*dy);
 
     // Calcula duração da viagem (tempo = distância / velocidade)
-    int duracao = (int) ceil(distancia / h->velocidade);
+    int duracao = (int) ceil(distancia / viaja-> h->velocidade);
 
     printf("%d: HEROI %d VIAJA DE BASE %d PARA BASE %d, DURACAO %d.\n",
-           t, h->id, B_atual->id, d->id, duracao);
+           viaja->tempo, viaja->h->id, B_atual->id, viaja->b->id, duracao);
 
     // Cria evento CHEGA
 
     evento *ev_chega = malloc(sizeof(evento));
     if (ev_chega) {
-        ev_chega->tempo = t + duracao;
-        ev_chega->h = h;
-        ev_chega->b = d;
+        ev_chega->tempo = viaja->tempo + duracao;
+        ev_chega->h = viaja->h;
+        ev_chega->b = viaja->b;
         ev_chega->tipo= 1;  // AVISA    
         ev_chega->mi = NULL;
         fprio_insere(LEF, ev_chega, ev_chega->tipo, ev_chega->tempo);
@@ -232,179 +270,125 @@ void viaja(int t, struct heroi *h, struct base *d) {
   
 
 
-void morre(int t, struct heroi *h, struct base *b) {
-    if (!h || !b) return;
+void morre(struct evento *morre, mundo *m) {
+    if (!morre) return;
 
     // Retira herói do conjunto de presentes da base
-    cjto_retira(b->presentes, h->id);
+    cjto_retira(morre->b->presentes, morre->h->id);
 
     // Marca o herói como morto
-    h->vivo = 0;
+    morre->h->vivo = 0;
 
-    printf("%d: HEROI %d MORRE NA BASE %d.\n", t, h->id, b->id);
+    printf("%d: HEROI %d MORRE NA BASE %d.\n", morre->tempo, morre->h->id, morre->b->id);
 
     // Cria evento AVISA para a base
     evento *ev = malloc(sizeof(evento));
     if (!ev) return;
 
-    ev->tempo = t;
+    ev->tempo = morre->tempo;
     ev->h = NULL;  // não há herói associado
-    ev->b = b;
+    ev->b = morre->b;
     ev->tipo = 4;  // AVISA
     ev->mi = NULL;
 
     fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
 
-
-void missao(int t, struct missao *mi) {
-    if (!mi) return;
-
-    // 1. Calcular distâncias e encontrar base mais próxima APTA
-    int BMP_index = -1;
-    double menor_dist = 1e9;
+// Função principal do evento MISSAO
+void missao( struct evento *missao,  mundo *m ) {
+    missao->mi->tentativas++;
+    
+    printf("%6d: MISSAO %d TENT %d HAB REQ: [ ", 
+           missao->tempo, missao->mi->id, missao->mi->tentativas);
+    cjto_imprime(missao->mi->requisitos);
+    printf(" ]\n");
+    
+    // Calcula distância de cada base ao local da missão
+    struct base *base_mais_proxima_apta = NULL;
+    int menor_distancia_apta = INT_MAX;
     
     for (int i = 0; i < m->Nbases; i++) {
-        struct base *b = &m->bases[i];
+        int dist = calcula_distancia(m->bases[i]->local, missao->mi->local);
         
-        // Verificar se base tem pelo menos um herói vivo
-        int tem_vivo = 0;
-        for (int hid = 0; hid < m->Nherois; hid++) {
-            if (cjto_pertence(b->presentes, hid) && m->herois[hid]->vivo) {
-                tem_vivo = 1;
-                break;
-            }
-        }
-        if (!tem_vivo) continue;
-        
-        // Calcular distância
-        double dx = b->local.x - mi->local.x;
-        double dy = b->local.y - mi->local.y;
-        double dist = sqrt(dx*dx + dy*dy);
-        
-        // Verificar se a base está APTA (união das habilidades contém requisitos)
-        struct cjto_t *habs = cjto_cria(m->Nhabilidades);
-        for (int hid = 0; hid < m->Nherois; hid++) {
-            if (cjto_pertence(b->presentes, hid) && m->herois[hid].vivo) {
-                cjto_uniao(habs, habs, m->herois[hid].habilidades);
-            }
-        }
-        
-        int apta = cjto_contem(habs, mi->requisitos);
-        cjto_destroi(habs);
-        
-        // Se está apta E é a mais próxima até agora
-        if (apta && dist < menor_dist) {
-            menor_dist = dist;
-            BMP_index = i;
+        // Verifica se é a base mais próxima E se está apta
+        if (dist < menor_distancia_apta && equipe_apta(m->bases[i], missao->mi,m)) {
+            menor_distancia_apta = dist;
+            base_mais_proxima_apta = m->bases[i];
         }
     }
     
-    // 2. Se encontrou uma base apta, cumpre a missão
-    if (BMP_index != -1) {
-        struct base *b = &m->bases[BMP_index];
-        mi->status = 1;
+    // Se encontrou uma base apta
+    if (base_mais_proxima_apta != NULL) {
+        printf("%6d: MISSAO %d CUMPRIDA BASE %d DIST %d\n", 
+               missao->tempo, missao->mi->id, base_mais_proxima_apta->id, menor_distancia_apta);
         
-        // Incrementa experiência de TODOS os heróis vivos presentes na base
-        for (int hid = 0; hid < m->Nherois; hid++) {
-            if (cjto_pertence(b->presentes, hid) && m->herois[hid].vivo) {
-                m->herois[hid].experiencia += 10;
-            }
-        }
+        missao->mi->status = 1; // Marca como cumprida
+        incrementa_experiencia_equipe(base_mais_proxima_apta,NULL, m);
+        m->missoes_completas++;
         
-        printf("%d: MISSÃO %d CUMPRIDA PELA BASE %d\n", t, mi->id, b->id);
         return;
     }
     
-    // 3. Nenhuma base apta - tentar usar Composto V
-    // Encontrar a base mais próxima (não precisa ser apta)
-    BMP_index = -1;
-    menor_dist = 1e9;
+    // Nenhuma equipe está apta - tenta usar Composto V
+    
+    // Encontra a base mais próxima (independente de estar apta)
+    struct base *base_mais_proxima = NULL;
+    int menor_distancia = INT_MAX;
     
     for (int i = 0; i < m->Nbases; i++) {
-        struct base *b = &m->bases[i];
-        
-        int tem_vivo = 0;
-        for (int hid = 0; hid < m->Nherois; hid++) {
-            if (cjto_pertence(b->presentes, hid) && m->herois[hid].vivo) {
-                tem_vivo = 1;
-                break;
-            }
-        }
-        if (!tem_vivo) continue;
-        
-        double dx = b->local.x - mi->local.x;
-        double dy = b->local.y - mi->local.y;
-        double dist = sqrt(dx*dx + dy*dy);
-        
-        if (dist < menor_dist) {
-            menor_dist = dist;
-            BMP_index = i;
+        int dist = calcula_distancia(m->bases[i]->local, missao->mi->local);
+        if (dist < menor_distancia && fila_tamanho(m->bases[i]->presentes) > 0) {
+            menor_distancia = dist;
+            base_mais_proxima = m->bases[i];
         }
     }
     
-    if (BMP_index == -1) {
-        printf("%d: MISSÃO %d ADIADA (nenhuma base com heróis vivos)\n", t, mi->id);
-        evento *ev = malloc(sizeof(evento));
-        ev->tempo = t + 24*60;
-        ev->mi = mi;
-        ev->tipo = 7; // MISSAO
-        ev->h = NULL;
-        ev->b = NULL;
-        fprio_insere(LEF, ev, ev->tipo, ev->tempo);
-        return;
-    }
-    
-    struct base *b = &m->bases[BMP_index];
-    
-    // Verificar condições para usar Composto V
-    if (m->NCompostosV > 0 && t % 2500 == 0) {
-        // Encontrar herói mais experiente na base mais próxima
-        int h_max = -1;
-        int exp_max = -1;
+    // Verifica se pode usar Composto V
+    if (m->NCompostosV > 0 && (missao->tempo % 2500 == 0) && base_mais_proxima != NULL) {
+        struct heroi *heroi_exp = heroi_mais_experiente(base_mais_proxima, m);
         
-        for (int hid = 0; hid < m->Nherois; hid++) {
-            if (cjto_pertence(b->presentes, hid) && m->herois[hid].vivo) {
-                if (m->herois[hid].experiencia > exp_max) {
-                    h_max = hid;
-                    exp_max = m->herois[hid].experiencia;
-                }
-            }
-        }
-        
-        if (h_max != -1) {
+        if (heroi_exp != NULL) {
+            printf("%6d: MISSAO %d CUMPRIDA BASE %d HEROI %d COMPOSTO V\n",
+                   missao->tempo, missao->mi->id, base_mais_proxima->id, heroi_exp->id);
+            
             m->NCompostosV--;
-            mi->status = 1;
+            missao->mi->status = 1; // Marca como cumprida
+            m->missoes_completas++;
             
-            // Criar evento MORRE para o herói que usou o composto
-            evento *ev = malloc(sizeof(evento));
-            ev->tempo = t;
-            ev->h = &m->herois[h_max];
-            ev->b = b;
+            // Incrementa experiência dos demais heróis (exceto o que morrerá)
+            incrementa_experiencia_equipe(base_mais_proxima, heroi_exp, m);
+            struct evento *ev = malloc(sizeof(evento));
+            if (!ev) return;
+
+            ev->tempo = missao->tempo;
+            ev->h = heroi_exp;  // 
+            ev->b = base_mais_proxima;
+            ev->tipo = 5;  // MORRE
             ev->mi = NULL;
-            ev->tipo = 8; // MORRE
             fprio_insere(LEF, ev, ev->tipo, ev->tempo);
-            
-            // Incrementar experiência dos DEMAIS heróis (exceto o que morreu)
-            for (int hid = 0; hid < m->Nherois; hid++) {
-                if (cjto_pertence(b->presentes, hid) && hid != h_max && m->herois[hid].vivo) {
-                    m->herois[hid].experiencia += 10;
-                }
-            }
-            
-            printf("%d: MISSÃO %d CUMPRIDA COM COMPOSTO V PELO HERÓI %d\n", t, mi->id, h_max);
             return;
+}
         }
-    }
     
-    // 4. Não foi possível cumprir a missão - adiar
-    printf("%d: MISSÃO %d ADIADA\n", t, mi->id);
-    evento *ev = malloc(sizeof(evento));
-    ev->tempo = t + 24*60;
-    ev->mi = mi;
-    ev->tipo = 7; // MISSAO
-    ev->h = NULL;
+    
+    // Missão impossível - adia para o dia seguinte
+    printf("%6d: MISSAO %d IMPOSSIVEL\n", missao->tempo, missao->mi->id);
+    
+    missao->mi->status = -1; // Marca como impossível
+    missao->mi->tentativas++;
+   struct evento *ev = malloc(sizeof(evento));
+    if (!ev) return;
+
+    ev->tempo = missao->tempo+1440;
+    ev->h = NULL;  // não há herói associado
     ev->b = NULL;
+    ev->tipo = 9;  // AVISA
+    ev->mi = missao->mi;
+
     fprio_insere(LEF, ev, ev->tipo, ev->tempo);
 }
-void fim (int t);
+    
+
+
+void fim (struct evento *fim);
+

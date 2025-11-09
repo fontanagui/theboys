@@ -7,8 +7,8 @@
 
 
 
-#ifndef ENTIDADES
-#define ENTIDADES
+#ifndef MUNDO
+#define MUNDO
 
 
 struct cordenada
@@ -32,7 +32,7 @@ struct base
 {
     int id;                    // identificador da base
     int lotacao;               // capacidade da base
-    struct conjto_t *presentes;  // conjunto de ids dos herois na base
+    struct cjto_t *presentes;  // conjunto de ids dos herois na base
     struct fila_t *espera ;     // fila de espera na base
     struct cordenada local;    // coordenadas da base
     int missoes ;              // número de missões completadas pela base
@@ -47,6 +47,7 @@ struct missao
     struct cordenada local; // coordenadas da missão
     int status;
     int tempo;
+    int tentativas;
 };
 
 typedef struct

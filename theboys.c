@@ -37,6 +37,8 @@ int inicializa_mundo (mundo *m) {
     m->herois= malloc(N_HEROIS* sizeof(struct heroi *));
     m->bases =malloc (N_BASES * sizeof(struct base *));
     m->missao=malloc(N_MISSOES* sizeof(struct missao *));
+    m->eventos=0;
+    m->missoes_completas=0;
 
     // inicialize heróis, bases e missões conforme necessário
     for (int i = 0; i < N_HEROIS; i++) {
@@ -84,34 +86,34 @@ int type;
     switch (type)
     {
     case 1  :
-      chega(ev->tempo, ev->h, ev->b);
+      chega(ev);
       break;
     case 2  :
-      espera(ev->tempo, ev->h, ev->b);
+      espera(ev);
       break;
     case 3  :
-      desiste(ev->tempo, ev->h, ev->b);
+      desiste(ev, m);
       break;
     case 4  :
-      avisa(ev->tempo, ev->b);
+      avisa(ev);
       break;
     case 5  :
-      entra(ev->tempo, ev->h, ev->b);
+      entra(ev);
       break;
     case 6  :
-      sai(ev->tempo, ev->h, ev->b);
+      sai(ev,m);
       break;
     case 7  : 
-      viaja(ev->tempo, ev->h, ev->b);
+      viaja(ev,m);
       break;
     case 8  :
-      morre(ev->tempo, ev->h, ev->b);
+      morre(ev, m);
       break;
     case 9  :
-      missao(ev->tempo, ev->mi);
+      missao(ev,m);
       break;
     case 10 :
-      fim(ev->tempo);
+      fim(ev);
       break;
   }
   }
