@@ -10,7 +10,7 @@
 #include "mundo.h"
 #include "eventos.h"
 #include "inicia_entidades.h"
-
+ #define T_FINAL 1000000000
 
 // programa principal
 int main ()
@@ -18,11 +18,8 @@ int main ()
   
   mundo *m;
   m=cria_mundo();
-  inicializa_mundo(m);
-  int relogio= m->relogio;
-
  for (int i = 0; i < m->Nherois; i++) {
-    struct base *b = m->bases[rand() % m->Nbases]; // ponteiro para base
+    struct base *b = m->bases[rand() % m->Nbases]; // ponteiro para base aleatoria
     int t = rand() % 4321;                          // tempo aleatório
 
     // cria evento e preenche campos
@@ -38,26 +35,26 @@ int main ()
 }
 
 int type;
-  while (relogio <= T_FINAL) {
+  while (m->relogio <= T_FINAL) {
 
-    struct evento *ev = fprio_retira(m->LEF,&type,&relogio);
+    struct evento *ev = fprio_retira(m->LEF,&type,&m->relogio);
     if (!ev) break;
     switch (type)
     {
     case 1  :
-      chega(ev);
+      chega(ev,m);
       break;
     case 2  :
-      espera(ev);
+      espera(ev,m);
       break;
     case 3  :
       desiste(ev, m);
       break;
     case 4  :
-      avisa(ev);
+      avisa(ev,m);
       break;
     case 5  :
-      entra(ev);
+      entra(ev,m);
       break;
     case 6  :
       sai(ev,m);
@@ -72,9 +69,12 @@ int type;
       missao(ev,m);
       break;
     case 10 :
-      fim(ev);
+      fim(ev,m);
       break;
   }
   }
+  destroi_mundo(m);
   return 0;
 }
+
+
