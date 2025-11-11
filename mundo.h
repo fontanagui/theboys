@@ -11,13 +11,13 @@
 #define MUNDO
 
 
-struct cordenada
+struct coordenada
 {
     int x;
     int y;
 };
 
-struct heroi
+ struct heroi
 {
     int id;                    // identificador do herói
     int paciencia;             // paciência do herói
@@ -28,31 +28,29 @@ struct heroi
     int vivo;                  // status de vida do herói (1 = vivo, 0 = morto)
 };
 
-struct base
+  struct base
 {
     int id;                    // identificador da base
     int lotacao;               // capacidade da base
     struct cjto_t *presentes;  // conjunto de ids dos herois na base
     struct fila_t *espera ;     // fila de espera na base
-    struct cordenada local;    // coordenadas da base
+    struct coordenada local;    // coordenadas da base
     int missoes ;              // número de missões completadas pela base
-
-
+    int filamax;      //tamanho max da fila de espera
 };
 
-struct missao
+   struct missao
 {
     int id;                    // identificador da missão
     struct conjto_t *requisitos; // conjunto de habilidades necessárias
-    struct cordenada local; // coordenadas da missão
+    struct coordenada local; // coordenadas da missão
     int status;
-    int tempo;
     int tentativas;
-};
+} ;
 
 typedef struct
 {
-    struct cordenada dimensao; // dimensões do mundo
+    struct coordenada dimensao; // dimensões do mundo
     int relogio;               // relógio do mundo
     int Nherois;               // número de heróis no mundo
     int Nbases;                // número de bases no mundo
@@ -64,10 +62,17 @@ typedef struct
     struct missao **missao; // vetor de missões no mundo
     int vivos;                   // número de heróis vivos no mundo
     int eventos ;                 // número de eventos processados no mundo 
-    int missoes_completas;        // número de missões completadas no mundo
-} mundo;
+    int missoes_completas;          // número de missões completadas no mundo
+    struct fprio_t *LEF ;     //fila de evetos futuros
+    int mortos ; // n de mortos para calcular a mortalidade
+
+}   mundo;
 
 
+mundo *cria_mundo();
+struct heroi *cria_heroi(int id);
+struct base *cria_base(int id);
+struct missao *cria_missao(int id);
+void destroi_mundo( mundo *m);
 
-mundo* cria_mundo();
 #endif
