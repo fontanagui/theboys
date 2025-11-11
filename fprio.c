@@ -1,7 +1,7 @@
 // TAD Fila de prioridades (FPRIO) genérica
 // Carlos Maziero, DINF/UFPR, Out 2024
 // Definição da interface
-
+ 
 // NÃO ALTERAR
 #include <stdio.h>
 #include <stdlib.h>

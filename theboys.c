@@ -9,7 +9,6 @@
 #include "conjunto.h"
 #include "mundo.h"
 #include "eventos.h"
-#include "inicia_entidades.h"
  #define T_FINAL 1000000000
 
 // programa principal
@@ -35,7 +34,8 @@ int main ()
 }
 
 int type;
-  while (m->relogio <= T_FINAL) {
+int finalizar=0;
+  while (!finalizar) {
 
     struct evento *ev = fprio_retira(m->LEF,&type,&m->relogio);
     if (!ev) break;
@@ -70,8 +70,10 @@ int type;
       break;
     case 10 :
       fim(ev,m);
+      finalizar=1;
       break;
   }
+  free (ev);
   }
   destroi_mundo(m);
   return 0;
