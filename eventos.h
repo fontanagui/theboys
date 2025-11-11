@@ -3,7 +3,6 @@
 
 #ifndef EVENTOS
 #define EVENTOS
-extern struct fprio_t *LEF; // declara LEF para outros arquivos
 
 
  struct evento {
