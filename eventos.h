@@ -1,39 +1,41 @@
+#ifndef EVENTOS_H
+#define EVENTOS_H
+
 #include "mundo.h"
+#include "fila.h"
+#include "conjunto.h"
+
+// estrutura do evento
+struct evento {
+    int tempo;
+    int tipo;
+    struct heroi *h;
+    struct base *b;
+    struct missao *mi;
+};
+
+void chega(struct evento *ev, mundo *m ); //1
+
+void espera(struct evento *ev, mundo*m ); //2
+
+void desiste(struct evento *ev, mundo *m ); //3
+
+void avisa(struct evento *ev, mundo *m ); //4
+
+void entra (struct evento *ev, mundo *m);//5
+
+void sai(struct evento *ev, mundo *m);//6
+
+void viaja(struct evento *ev,mundo *m );//7
+
+void morre (struct evento *ev,mundo *m);//8
 
 
-#ifndef EVENTOS
-#define EVENTOS
-
-
- struct evento {
-    int tempo;                                  // tempo do evento
-    struct heroi *h;                            // herói envolvido
-    struct base *b;                             // base envolvida
-    int tipo;                                     // tipo do evento
-    struct missao *mi // ponteiro para função
-} ;
-
-
-void chega(struct evento *ev, mundo *m );
-
-void espera(struct evento *ev, mundo*m );
-
-void desiste(struct evento *ev, mundo *m );
-
-void avisa(struct evento *ev, mundo *m );
-
-void entra (struct evento *ev, mundo *m);
-
-void sai(struct evento *ev, mundo *m);
-
-void viaja(struct evento *ev,mundo *m );
-
-void morre (struct evento *ev,mundo *m);
-
-
-void missao(struct evento *ev, mundo *m );
+void missao(struct evento *ev, mundo *m );//9
  
 
-void fim (struct evento *ev, mundo *m);
+void fim (struct evento *ev, mundo *m);//10
 
+
+struct evento *cria_evento(int t, struct heroi *h, struct base *b, int type, struct missao *mi);
 #endif

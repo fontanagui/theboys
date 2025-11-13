@@ -24,7 +24,7 @@ struct coordenada
     int velocidade;            // velocidade do herói
     int experiencia;           // experiência do herói
     int base;                  // base do herói
-    struct conjto_t *habilidades; // conjunto de habilidades do heroi
+    struct cjto_t *habilidades; // conjunto de habilidades do heroi
     int vivo;                  // status de vida do herói (1 = vivo, 0 = morto)
 };
 
@@ -42,10 +42,11 @@ struct coordenada
    struct missao
 {
     int id;                    // identificador da missão
-    struct conjto_t *requisitos; // conjunto de habilidades necessárias
+    struct cjto_t *requisitos; // conjunto de habilidades necessárias
     struct coordenada local; // coordenadas da missão
     int status;
     int tentativas;
+    int tempo;
 } ;
 
 typedef struct
@@ -73,6 +74,7 @@ mundo *cria_mundo();
 struct heroi *cria_heroi(int id);
 struct base *cria_base(int id);
 struct missao *cria_missao(int id);
+void inicializa_missao(mundo *m);
 void destroi_mundo( mundo *m);
 
 #endif

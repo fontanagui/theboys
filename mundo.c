@@ -7,7 +7,7 @@
 #define N_HABILIDADES 10
 #define N_PRESENTES 10
 #define MUNDO_TAM 100
-#define TMP_MAX 100000
+#define TEMPO_MAX 100000
 #define TAM_MUNDO 100000
 #define T_INICIAL 0
 #define N_HEROIS 20
@@ -60,6 +60,7 @@ int aleatoria (int min, int max)
     missao->local.y=rand()% MUNDO_TAM;
     missao->status=0;
     missao->tentativas=0;
+    missao->tempo=aleatoria(0,TEMPO_MAX-1);
     return missao;
 }
 
@@ -90,7 +91,7 @@ mundo* cria_mundo() {
       m->bases[i]= cria_base(i);
     }
     for (int i =0;i<  N_MISSOES;i++){
-      m->missao= cria_missao(i);
+      m->missao[i]= cria_missao(i);
     }
     return m;
 }
@@ -134,3 +135,6 @@ void destroi_mundo(mundo *m) {
 
     free(m);
 }
+
+
+

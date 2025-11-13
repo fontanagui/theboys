@@ -45,19 +45,6 @@ float media_missao(mundo *m) {
 
 }
 
- struct evento *cria_evento (int t , struct heroi *h, struct base *b, int type, struct missao *mi) {
-    struct evento *ev = malloc(sizeof(struct evento));
-    if (!ev) return;
-
-    ev->tempo = t;
-    ev->h = h;
-    ev->b = b;           
-    ev->tipo= type; 
-    ev->mi = mi;
-
-    return ev;
- }
-
 // Função auxiliar para calcular distância entre dois pontos
 int calcula_distancia(struct coordenada p1, struct coordenada p2) {
     int dx = p1.x - p2.x;
@@ -125,18 +112,33 @@ void incrementa_experiencia_equipe(struct base *base, struct heroi *exceto,  mun
 }
 
 
+
+struct evento *cria_evento(int t, struct heroi *h, struct base *b, int type, struct missao *mi) {
+    struct evento *ev = malloc(sizeof(struct evento));
+    if (!ev) return NULL;   
+
+    ev->tempo = t;
+    ev->h = h;
+    ev->b = b;
+    ev->tipo = type;
+    ev->mi = mi;
+
+    return ev;
+}
+
+
+
 void chega( struct evento *chega, mundo *m) {
     if (!chega  || !chega->h->vivo) return;
     m->eventos++;
     chega->h->base = chega->b->id;
 
 
-    int espera_evento = ((cjt_card(chega->b->presentes) < chega-> b->lotacao) && fila_vazia(chega->b->espera)) ||
+    int espera_evento = ((cjto_card(chega->b->presentes) < chega-> b->lotacao) && fila_vazia(chega->b->espera)) ||
                         (chega->h->paciencia > 10 * chega->b->espera->num);
 
 
-
-    struct evento *ev = malloc(sizeof(struct evento *) );
+    struct evento *ev;
     if (espera_evento){
         printf("%d: CHEGA HEROI %d BASE %d (%d/%d) ESPERA \n ", chega->tempo, chega->h->id, chega->b->id, cjto_card(chega->b->presentes), chega->b->lotacao);
         ev =  cria_evento (chega->tempo,chega->h,chega->b,2, NULL);}
@@ -157,9 +159,8 @@ void espera(struct evento *espera, mundo*m) {
         espera->b->filamax= fila_tamanho(espera->b->espera);
     
 
-    struct evento *ev = malloc(sizeof(struct evento *));
-    if (!ev) return;
-    ev = cria_evento (espera->tempo,NULL,espera->b,4, NULL);
+   
+    struct evento *ev = cria_evento (espera->tempo,NULL,espera->b,4, NULL);
 
     fprio_insere(m->LEF, ev, ev->tipo, ev->tempo);
 }
@@ -194,7 +195,9 @@ void desiste(struct evento *desiste, mundo *m) {
 void avisa(struct evento *avisa,mundo *m) {
     m->eventos++;
     struct heroi *h;
-    printf("%d: AVISA  PORTEIRO  BASE %d (%d/%d) FILA [ \n", avisa->tempo, avisa->b->id,cjto_card());
+    printf("%d: AVISA  PORTEIRO  BASE %d (%d/%d) FILA [ ", avisa->tempo, avisa->b->id,cjto_card(avisa->b->presentes), avisa->b->lotacao);
+    fila_imprime(avisa->b->espera);
+    printf(" ] \n");
 
 
     // Enquanto houver vagas e heróis na fila
@@ -203,7 +206,7 @@ void avisa(struct evento *avisa,mundo *m) {
         if (!h || (h->vivo==0)) continue;
         cjto_insere(avisa->b->presentes, h->id); // adiciona ao conjunto de presentes
 
-        printf("%d: HEROI %d ENTRA NA BASE %d.\n", avisa->tempo, h->id, avisa->b->id);
+        printf("%d: AVISA PORTEIRO BASE %d ADMITE  %d.\n", avisa->tempo, avisa->b->id,h->id);
 
         // Cria evento ENTRA
         struct evento *ev = malloc(sizeof(struct evento *));
@@ -249,19 +252,17 @@ void sai(struct evento *sai, mundo *m) {
     printf("%d: HEROI %d SAI DA BASE %d (%d/%d) \n", sai->tempo, sai->h->id, sai->b->id,cjto_card (sai->b->presentes), sai->b->lotacao);
 
     // Cria evento VIAJA
-    struct evento *ev_viaja = malloc(sizeof(struct evento* ));
-    if (ev_viaja) {
-        ev_viaja=cria_evento(sai->tempo,sai->h,D,7,NULL);
-        fprio_insere(m->LEF, ev_viaja, ev_viaja->tipo, ev_viaja->tempo);
+    struct evento *ev_viaja;
+    ev_viaja=cria_evento(sai->tempo,sai->h,D,7,NULL);
+    fprio_insere(m->LEF, ev_viaja, ev_viaja->tipo, ev_viaja->tempo);
 
-    }
+    
 
     // Cria evento AVISA para a base original
-     struct evento *ev_avisa = malloc(sizeof(struct evento*));
-    if (ev_avisa) {
+     struct evento *ev_avisa;
         ev_avisa=cria_evento(sai->tempo,NULL,sai->b,4,NULL);
         fprio_insere(m->LEF, ev_avisa, ev_avisa->tipo, ev_avisa->tempo);
-    }
+    
 }
 
 
@@ -293,11 +294,10 @@ void viaja(struct evento *viaja,mundo*m) {
 
     // Cria evento CHEGA
 
-    struct evento *ev_chega = malloc(sizeof(struct evento*));
-    if (ev_chega) {
-        ev_chega=cria_evento(viaja->tempo+duracao,viaja->h,viaja->b,1,NULL);
-        fprio_insere(m->LEF, ev_chega, ev_chega->tipo, ev_chega->tempo);
-    }
+    struct evento *ev_chega;
+    ev_chega=cria_evento(viaja->tempo+duracao,viaja->h,viaja->b,1,NULL);
+    fprio_insere(m->LEF, ev_chega, ev_chega->tipo, ev_chega->tempo);
+    
 }
 
 
@@ -316,8 +316,7 @@ void morre(struct evento *morre, mundo *m) {
     printf("%d: HEROI %d MORRE  MISSAO %d.\n", morre->tempo, morre->h->id, morre->mi->id);
 
     // Cria evento AVISA para a base
-    struct evento *ev = malloc(sizeof(struct evento*));
-    if (!ev) return;
+    struct evento *ev ;
     ev=cria_evento(morre->tempo,NULL,morre->b,4,NULL);
     fprio_insere(m->LEF, ev, ev->tipo, ev->tempo);
 }
@@ -387,8 +386,7 @@ void missao( struct evento *missao,  mundo *m ) {
             base_mais_proxima->missoes++;
             // Incrementa experiência dos demais heróis (exceto o que morrerá)
             incrementa_experiencia_equipe(base_mais_proxima, heroi_exp, m);
-            struct evento *ev = malloc(sizeof(struct evento*));
-            if (!ev) return; 
+            struct evento *ev ;
             ev=cria_evento (missao->tempo,heroi_exp,base_mais_proxima,5,missao->mi);
             fprio_insere(m->LEF, ev, ev->tipo, ev->tempo);
             return;
@@ -401,8 +399,7 @@ void missao( struct evento *missao,  mundo *m ) {
     
     missao->mi->status = 0; // Marca como impossível
     missao->mi->tentativas++;
-   struct evento *ev = malloc(sizeof(struct evento *));
-    if (!ev) return;
+   struct evento *ev ;
     ev=cria_evento(missao->tempo+1440,NULL,NULL,9,missao->mi);
     fprio_insere(m->LEF, ev, ev->tipo, ev->tempo);
 }

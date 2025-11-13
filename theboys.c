@@ -33,6 +33,12 @@ int main ()
     fprio_insere(m->LEF, ev, ev->tipo, ev->tempo); // prioridade = tempo
 }
 
+for (int i=0; i<m->Nmissoes;i++) {
+  struct evento *mi;
+  mi= cria_evento(m->missao[i]->tempo,NULL,NULL,9,m->missao[i]);
+  fprio_insere(m->LEF,mi,9,mi->tempo);
+}
+
 int type;
 int finalizar=0;
   while (!finalizar) {
