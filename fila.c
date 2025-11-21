@@ -89,10 +89,8 @@ void fila_imprime(struct fila_t *f) {
     }
 
     struct fila_nodo_t *atual = f->prim;
-    printf("Fila: ");
     while (atual != NULL) {
         printf("%d ", atual->item);
         atual = atual->prox;
     }
-    printf("\n");
 }

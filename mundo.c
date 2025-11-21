@@ -6,13 +6,12 @@
 #include <string.h>
 #define N_HABILIDADES 10
 #define N_PRESENTES 10
-#define MUNDO_TAM 100
-#define TEMPO_MAX 100000
-#define TAM_MUNDO 100000
+#define TEMPO_MAX 525600
+#define TAM_MUNDO 20000
 #define T_INICIAL 0
-#define N_HEROIS 20
-#define N_BASES 5
-#define N_MISSOES 100
+#define N_HEROIS 50
+#define N_BASES 10
+#define N_MISSOES 5256
 #define COMPOSTO_V 30
 
 int aleatoria (int min, int max)
@@ -29,9 +28,9 @@ int aleatoria (int min, int max)
     h->velocidade = aleatoria(50,5000);
     h->experiencia = 0;
     h->base = -1; // sem base inicial
-    int tamanho = aleatoria(0,3); // tamanho aleatório entre 0 e 3
+    int tamanho = aleatoria(1,3); // tamanho aleatório entre 1 e 3
     h->habilidades = cjto_aleat(tamanho, N_HABILIDADES );
-    h->vivo = 1; // herói começa vivo
+    h->vivo = 1; // herói começa vivo   
     return  h;
 }
 
@@ -43,8 +42,8 @@ int aleatoria (int min, int max)
     b->lotacao = aleatoria(3,10); //(entre 3 e 10)
     b->presentes = cjto_cria(N_HEROIS); // 
     b->espera = fila_cria();
-    b->local.x = aleatoria(0,MUNDO_TAM);
-    b->local.y = aleatoria(0,MUNDO_TAM);
+    b->local.x = aleatoria(0,TAM_MUNDO-1);
+    b->local.y = aleatoria(0,TAM_MUNDO-1);
     b->missoes = 0;
     b->filamax=0;
     return b;
@@ -56,8 +55,8 @@ int aleatoria (int min, int max)
     missao->id=id;
     int habilidades=rand()%(10-6+1)+6;
     missao->requisitos=cjto_aleat(habilidades,N_HABILIDADES);
-    missao->local.x= rand()% MUNDO_TAM;
-    missao->local.y=rand()% MUNDO_TAM;
+    missao->local.x= rand()% TAM_MUNDO-1;
+    missao->local.y=rand()% TAM_MUNDO-1;
     missao->status=0;
     missao->tentativas=0;
     missao->tempo=aleatoria(0,TEMPO_MAX-1);
